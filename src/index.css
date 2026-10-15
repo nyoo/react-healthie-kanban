@@ -101,11 +101,47 @@ h1 {
 }
 
 .kanban-card {
-  padding: 1rem;
+  position: relative;
+  padding: 1rem 3.5rem 1rem 1rem;
   border: 1px solid #cbd5e1;
   border-radius: 0.5rem;
   background: #fff;
   overflow-wrap: anywhere;
+}
+
+.drag-instructions {
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.drag-handle {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.25rem;
+  background: #f8fafc;
+  cursor: grab;
+  touch-action: none;
+}
+
+.drag-handle:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+}
+
+[data-dragging='true'] .kanban-card {
+  border-color: #2563eb;
+  box-shadow: 0 8px 24px #1e293b40;
+}
+
+[data-dragging='true'] .drag-handle {
+  cursor: grabbing;
+}
+
+[data-drop-target='true'] {
+  outline: 2px dashed #2563eb;
+  outline-offset: 3px;
 }
 
 .kanban-card h3 {

@@ -23,7 +23,7 @@ function App() {
         <p>A place to see what’s next, in progress, and complete.</p>
         <p className="sample-notice">Sample board · Temporary character references</p>
       </header>
-      <KanbanBoard board={board} />
+      <KanbanBoard board={board} onBoardChange={setBoard} />
       <CreateItemForm onCreate={createItem} />
     </main>
   )

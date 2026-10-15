@@ -11,8 +11,9 @@
   ordered display of cards or an empty placeholder.
 - `KanbanCard` displays an item's title and temporary character reference.
 
-The board components are presentational function components. They receive data
-through props and do not maintain copies of the board state.
+The board components receive data through props and do not maintain copies of
+the board state. `KanbanBoard` also owns the drag event handler; `KanbanColumn`
+registers a drop target and `KanbanCard` registers a sortable card and drag handle.
 
 ## Board state representation
 
@@ -62,20 +63,21 @@ across renders. Character objects are not duplicated in board state.
 Components treat props and the initial fixture as immutable. No context or
 external store is needed.
 
-## Future creation, movement, and ordering
+## Creation, movement, and ordering
 
 Array position is the card order. Creation appends an item with a new
-stable ID to the To Do array. Reordering can replace that array with a reordered
-copy. Moving between columns can remove the item from the source array and
-insert it at a chosen destination index in one state update, retaining its ID.
-These operations should copy the affected arrays and the containing board.
+stable ID to the To Do array. The pure `moveItem` helper finds the source by stable item ID, removes that
+exact item, and inserts it at a final destination index in one immutable update.
+It copies only affected arrays and the containing board, retaining the item
+object, ID, title, and character assignment. Array order is deterministic;
+unchanged positions and missing IDs return the original board.
 
 This representation avoids maintaining an item lookup and separate ID lists in
 sync. The tradeoff is that locating an item by ID requires searching the column
 arrays. That is a reasonable cost for a small interview board. Normalization can
 be considered if requirements later justify frequent global lookups or shared
-item references. Transformation helpers can be extracted when those operations
-are implemented and have concrete behavior to test.
+item references. `tests/kanban.test.ts` covers moves, boundaries, no-ops, immutability, and repeated
+transfers that preserve the complete set of original items.
 
 ## Character fetching and selection
 
@@ -90,5 +92,42 @@ these states below the board and owns the selected character ID.
 native select with required-field support. Fetching failures disable creation
 and offer a retry while the existing board continues to render independently.
 
-Pagination, drag-and-drop, animations, editing, deletion, and persistence remain
+## Drag-and-drop lifecycle
+
+The integration uses `@dnd-kit/react` 0.5.0 and `@dnd-kit/dom` 0.5.0, checked
+against the [official multiple-list guide](https://dndkit.com/react/guides/multiple-sortable-lists/)
+and installed package types. There was no legacy dnd-kit integration to migrate.
+
+`DragDropProvider` supplies the default pointer and keyboard sensors, drag
+feedback, and accessibility announcements. Each card uses `useSortable` with
+its stable ID, array index, column group, and a labeled button handle. Space
+starts/drops a keyboard drag, arrows select targets, and Escape cancels.
+
+Only `SortableKeyboardPlugin` is enabled for sortables. The default
+`OptimisticSortingPlugin` reparents DOM nodes across lists; browser verification
+found this conflicts with React removing the same nodes from their original
+column. Disabling it keeps DOM membership under React's control. During dragging,
+the library moves its visual feedback and CSS highlights the source and target;
+the arrays and counts remain unchanged until a successful drop.
+
+`KanbanBoard.handleDragEnd` ignores canceled drags, missing targets, and invalid
+sources/destinations. A card target supplies its group and current array index.
+Dropping on a card moves the source to that index. Each whole column is also a
+lower-priority droppable target, so empty columns work without a card target;
+dropping in column space appends. Card targets take precedence over their
+containing column. Source and destination are captured before the functional
+state updater invokes `moveItem` against the latest board in `App`.
+
+There is no hover-state copy or rollback snapshot: canceling or dropping without
+changing position leaves state unchanged. The helper removes and reinserts one
+existing object atomically, so a valid board stays unique and complete. Invalid
+destination indices are rejected or clamped to the available array boundaries.
+
+Build, typecheck, and lint are configured npm commands. Run the existing and
+movement tests with `node --test tests/*.test.ts` on a Node version supporting
+TypeScript stripping. Browser checks covered all requested column directions,
+reordering to the beginning/end, an empty destination, cancellation, and no-op
+drops with keyboard input, plus pointer movement into an empty column.
+
+Pagination, completion animations, editing, deletion, and persistence remain
 outside this change.
