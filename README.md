@@ -1,10 +1,10 @@
 # Healthie React Kanban
 
-![Kanban board with Rick Sanchez, Morty Smith, and Summer Smith assignments](docs/images/kanban-board.jpg)
-
 A React + TypeScript interview exercise built with Vite and plain CSS. Organize
 items across To Do, Doing, and Done, with a Rick and Morty character assigned to
 each newly created item. Board changes live only in the current browser session.
+
+![Kanban board with Rick Sanchez, Morty Smith, and Summer Smith assignments](docs/images/kanban-board.jpg)
 
 ## Prerequisites and installation
 
