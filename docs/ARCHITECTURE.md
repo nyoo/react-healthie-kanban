@@ -138,9 +138,10 @@ animations during that cleanup caused both animations to restart. The glow's
 own animation-end event clears the celebration; child events are ignored.
 Browser event counts verified one start and end per animation per completion.
 
-Build, typecheck, and lint are configured npm commands. Run the existing and
-movement tests with `node --test tests/*.test.ts` on a Node version supporting
-TypeScript stripping. Browser checks covered all requested column directions,
+Build, typecheck, lint, and test are configured npm commands. Run the tests with
+`npm test` on Node 22.22.2+, 24.15.0+, or 26+, supporting TypeScript stripping
+and the jsdom dependency. Typecheck
+also checks the test files. Browser checks covered all requested column directions,
 reordering to the beginning/end, an empty destination, cancellation, and no-op
 drops with keyboard input, plus pointer movement into an empty column.
 
@@ -151,6 +152,18 @@ Browser verification covered creating Rick and Morty cards, repeated assignments
 loaded avatar images, reordering, and a transfer to Done. A temporary local
 fixture with a failing image URL verified that the avatar fallback retains the
 character name. Server rendering does not dispatch image events.
+
+`tests/create-item.test.ts` uses React Testing Library with jsdom and Vite's TSX
+transform to exercise valid submissions, required-field guards, form reset,
+and invalidation of a selected character after loading state or results change.
+An App integration test mocks fetch and UUID generation to verify repeated titles
+create separate cards in To Do with the selected assignments and updated counts.
+Movement tests exercise all six column directions, empty destinations, reordering,
+and identity/uniqueness invariants without simulating the drag library.
+
+Automated coverage does not simulate pointer/keyboard drag sensors, cancellation,
+drop-target selection, image load failures, retry/abort races in the character
+hook, or completion animations. Those remain browser/integration testing gaps.
 
 Pagination, editing, deletion, and persistence remain
 outside this change.

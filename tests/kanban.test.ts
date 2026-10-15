@@ -8,7 +8,9 @@ function ids(board: BoardState, column: ColumnId) {
 }
 
 for (const [source, destination] of [
-  ['todo', 'doing'], ['doing', 'done'], ['done', 'todo'],
+  ['todo', 'doing'], ['todo', 'done'],
+  ['doing', 'todo'], ['doing', 'done'],
+  ['done', 'todo'], ['done', 'doing'],
 ] as const) {
   test(`moves ${source} to ${destination}, preserving identity and assignments`, () => {
     const item = initialBoard.todo[0]
@@ -34,6 +36,20 @@ test('inserts at beginning and appends at end of another column', () => {
   assert.deepEqual(ids(first, 'doing'), ['sample-card-1', 'sample-card-3'])
   const last = moveItem(initialBoard, 'sample-card-1', 'doing', 1)
   assert.deepEqual(ids(last, 'doing'), ['sample-card-3', 'sample-card-1'])
+})
+
+test('reorders a middle item while preserving every item and character assignment', () => {
+  const board: BoardState = {
+    todo: Object.values(initialBoard).flat(), doing: [], done: [],
+  }
+  const middle = board.todo[1]
+  assert.ok(middle)
+  const result = moveItem(board, middle.id, 'todo', 2)
+  assert.deepEqual(ids(result, 'todo'), ['sample-card-1', 'sample-card-3', 'sample-card-2'])
+  for (const item of board.todo) {
+    assert.equal(result.todo.find((entry) => entry.id === item.id), item)
+  }
+  assert.deepEqual(ids(board, 'todo'), ['sample-card-1', 'sample-card-2', 'sample-card-3'])
 })
 
 test('ignores unknown items, invalid indices, and unchanged positions', () => {
