@@ -6,6 +6,7 @@ interface CharacterSelectorProps {
   value: string
   onChange: (characterId: string) => void
   disabled?: boolean
+  required?: boolean
 }
 
 export function CharacterSelector({
@@ -13,6 +14,7 @@ export function CharacterSelector({
   value,
   onChange,
   disabled = false,
+  required = false,
 }: CharacterSelectorProps) {
   const id = useId()
 
@@ -24,6 +26,7 @@ export function CharacterSelector({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled || characters.length === 0}
+        required={required}
       >
         <option value="">Choose a character</option>
         {characters.map((character) => (

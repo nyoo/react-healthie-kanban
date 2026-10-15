@@ -145,7 +145,7 @@ h1 {
   }
 }
 
-.character-preview {
+.create-item-form {
   max-width: 32rem;
   margin-top: 2rem;
   padding: 1.5rem;
@@ -154,28 +154,29 @@ h1 {
   background-color: #fff;
 }
 
-.character-preview h2 {
+.create-item-form h2 {
   margin-top: 0;
 }
 
-.character-selector {
+.character-selector,
+.title-field {
   display: grid;
   gap: 0.5rem;
   margin-top: 1rem;
 }
 
 select,
+input,
 button {
   max-width: 100%;
   padding: 0.5rem;
   font: inherit;
 }
 
-.character-preview figure {
-  margin: 1.5rem 0 0;
+.create-item-form > button {
+  margin-top: 1rem;
 }
 
-.character-preview img {
-  display: block;
-  border-radius: 0.5rem;
+button:disabled {
+  cursor: not-allowed;
 }
