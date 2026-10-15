@@ -1,6 +1,7 @@
 import { DragDropProvider } from '@dnd-kit/react'
 import type { DragEndEvent } from '@dnd-kit/react'
 import { isSortable } from '@dnd-kit/react/sortable'
+import { useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { isColumnId, moveItem } from '../kanban'
 import type { BoardState, ColumnId } from '../kanban'
@@ -18,6 +19,12 @@ const columns: { id: ColumnId; title: string }[] = [
 ]
 
 function KanbanBoard({ board, onBoardChange }: KanbanBoardProps) {
+  const [celebratingItemIds, setCelebratingItemIds] = useState<string[]>([])
+
+  function finishCelebration(itemId: string) {
+    setCelebratingItemIds((previous) => previous.filter((id) => id !== itemId))
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { source, target } = event.operation
     if (event.canceled || !target || !isSortable(source) || typeof source.id !== 'string') return
@@ -31,14 +38,22 @@ function KanbanBoard({ board, onBoardChange }: KanbanBoardProps) {
     const itemId = source.id
     const index = isSortable(target) ? target.index : 0
     const append = isColumnId(target.id)
-    onBoardChange((previousBoard) =>
-      moveItem(
-        previousBoard,
-        itemId,
-        destination,
-        append ? previousBoard[destination].length : index,
-      ),
+    const nextBoard = moveItem(
+      board,
+      itemId,
+      destination,
+      append ? board[destination].length : index,
     )
+    if (nextBoard === board) return
+
+    onBoardChange(nextBoard)
+
+    const wasIncomplete = [...board.todo, ...board.doing].some((item) => item.id === itemId)
+    if (destination === 'done' && wasIncomplete) {
+      setCelebratingItemIds((previous) => [...previous, itemId])
+    } else if (destination !== 'done') {
+      finishCelebration(itemId)
+    }
   }
 
   return (
@@ -49,7 +64,14 @@ function KanbanBoard({ board, onBoardChange }: KanbanBoardProps) {
       </p>
       <section className="kanban-board" aria-label="Kanban board">
         {columns.map(({ id, title }) => (
-          <KanbanColumn key={id} id={id} title={title} items={board[id]} />
+          <KanbanColumn
+            key={id}
+            id={id}
+            title={title}
+            items={board[id]}
+            celebratingItemIds={celebratingItemIds}
+            onCelebrationEnd={finishCelebration}
+          />
         ))}
       </section>
     </DragDropProvider>
