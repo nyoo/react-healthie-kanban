@@ -2,8 +2,9 @@
 
 This is a React + TypeScript Healthie Kanban interview exercise. Optimize for
 readable code, clear reasoning, and small changes that are easy to explain during
-an interview. The current scope is the Vite foundation and a minimal placeholder
-App. Do not implement the Kanban board until explicitly requested.
+an interview. The implemented scope is a three-column board with GraphQL character
+assignment, item creation, drag-and-drop movement/reordering, and a Done effect.
+Keep changes within the requested exercise scope; do not add speculative features.
 
 ## Working conventions
 
@@ -39,8 +40,11 @@ Use npm and keep `package-lock.json` in sync with dependency changes.
 - `npm run dev`: start the Vite development server.
 - `npm run typecheck`: check the app and Vite config with TypeScript.
 - `npm run lint`: run Oxlint using `.oxlintrc.json`.
+- `npm test`: run Node's built-in test runner, including React tests with jsdom.
 - `npm run build`: run TypeScript checks and build to `dist/`.
 - `npm run preview`: serve the built output locally.
 
-Run the build and configured checks after changes. There is currently no test
-runner or test command; add tests when requested behavior warrants them.
+Run typecheck, lint, tests, and build after changes. Use Node.js 24.15.0+ on the
+24.x line (or a compatible newer version); tests use native TypeScript stripping
+and jsdom. Typecheck includes the test files. Add tests when changed behavior
+warrants them; browser checks are still needed for drag sensors and animations.

@@ -1,169 +1,161 @@
 # Kanban board architecture
 
-## Component responsibilities
+## Component responsibilities and data flow
 
-- `App` owns the board state and shared character request, generates item IDs, and
-  appends created items to To Do.
-- `CreateItemForm` receives character loading state and collects and validates controlled
-  title and character inputs before calling `App` through `onCreate`.
-- `KanbanBoard` defines the column labels and display order: To Do, Doing, Done.
-  It passes each column its ID, title, ordered items, and shared characters.
-- `KanbanColumn` renders a heading, a count derived from its items, and either an
-  ordered display of cards or an empty placeholder. It resolves each item's string
-  `characterId` from the shared character collection and passes the matching
-  character to `KanbanCard`.
-- `KanbanCard` displays the item title, character name, and API avatar. Missing
-  characters show “Character unavailable”; missing or failed images show an
-  accessible avatar fallback while retaining any available character name.
+- `App` owns the authoritative board with `useState`, calls `useCharacters` once,
+  generates UUIDs, and appends new items to To Do with a functional state update.
+- `CreateItemForm` owns controlled title/character inputs. It trims titles,
+  validates the assignment against loaded characters, guards submission, and
+  clears inputs after creation. It renders loading, empty, and error/retry states.
+- `CharacterSelector` renders a labeled, controlled native select.
+- `KanbanBoard` defines the column order/labels, owns drag-end handling and
+  transient celebration IDs, and sends the next board to App's setter.
+- `KanbanColumn` registers a whole-column drop target, derives the count, renders
+  cards or an empty placeholder, and resolves character IDs from shared data.
+- `KanbanCard` registers a sortable card and labeled drag handle. It renders the
+  title, character, avatar/fallback, and completion effect. Its local state only
+  tracks a failed image URL.
 
-The board components receive data through props and do not maintain copies of
-the board state. `KanbanBoard` also owns the drag event handler; `KanbanColumn`
-registers a drop target and `KanbanCard` registers a sortable card and drag handle.
+Data flows from `App` to the form and `KanbanBoard`, then through columns to cards.
+Callbacks flow upward for creation and movement; props are not copied into a
+second board store. Character objects are shared rather than fetched per card.
 
-## Board state representation
-
-`src/kanban.ts` defines the domain types and a small sample board:
+## Board state model
 
 ```ts
 type ColumnId = 'todo' | 'doing' | 'done'
-
-type KanbanItem = {
-  id: string
-  title: string
-  characterId: string
-}
-
+type KanbanItem = { id: string; title: string; characterId: string }
 type BoardState = Record<ColumnId, KanbanItem[]>
 ```
 
-Each column has an array of complete items in display order. Each item belongs
-to exactly one column, and its ID must be unique across the board. IDs remain
-stable when titles, positions, or columns change. Card React keys use item IDs;
-column keys use column IDs.
+Array membership represents column ownership and array position represents order.
+Each item has a unique, stable ID used for React keys and dragging. Counts are
+array lengths; no separate status, position, or count fields need synchronization.
+The initial fixture contains three sample items with deliberately unavailable
+character references. Newly created items use `crypto.randomUUID()` and a valid
+API character ID. Repeated titles and shared character assignments are allowed.
 
-An item's column is represented by its array membership. There is no redundant
-column property or position field on the item. Counts come from array lengths.
-The sample IDs and character references are explicit placeholders, with no
-dependency on a character API.
+`moveItem` is a pure immutable transition. It finds an item by ID, removes it,
+then inserts the same object at the final destination index. It copies affected
+arrays and retains untouched arrays. Missing IDs, noninteger indices, and no-op
+moves return the original board; integer indices are clamped to array boundaries.
+A valid input board retains every item exactly once after a move.
 
-## State ownership and data flow
+Complete objects in column arrays are easy to explain and update for this small
+board. The cost is linear lookup by ID. Normalization would introduce a separate
+item map and ordered ID arrays that must stay consistent; it is unnecessary here.
 
-`App` initializes one `useState<BoardState>` value from the sample board. Data
-flows downward: `App` → `KanbanBoard` → `KanbanColumn` → `KanbanCard`.
-The sample fixture is initialization data, not another synchronized state store.
+## GraphQL fetching
 
-`CreateItemForm` trims the title and checks that the selected character ID is
-present in the successfully loaded character list. Empty or whitespace-only
-titles, missing selections, loading, empty results, and API failures disable
-creation. The submit handler also guards against invalid input.
+`src/api/characters.ts` sends a native `fetch` POST to
+`https://rickandmortyapi.com/graphql` for `characters(page: 1)`, requesting ID,
+name, image, and species. It filters null results. An empty array is a successful
+empty response; absent results are an error.
 
-On valid submission, the form calls `App` with only the title and character ID.
-`App` generates a `crypto.randomUUID()` once per item, outside the state updater,
-and uses a functional update to append the item to a copied To Do array. Other
-columns retain their existing arrays. React immediately renders the new card
-and derived count, and the form clears both inputs after the callback returns.
-Repeated titles are allowed; IDs are independent of titles and stay stable
-across renders. Character objects are not duplicated in board state.
+Non-2xx HTTP responses, GraphQL errors (even with partial data), network failures,
+and invalid JSON reject the request. GraphQL messages and HTTP status information
+reach the form through the hook's error state. Types describe expected responses;
+they do not fully validate untrusted JSON at runtime.
 
-Components treat props and the initial fixture as immutable. No context or
-external store is needed.
+`useCharacters` uses a discriminated loading/success/error state and an attempt
+counter for explicit retry. Each effect owns an AbortController; cleanup aborts
+the request and aborted effects do not update state. This also handles React
+StrictMode's development effect cleanup/restart. Retry immediately enters loading
+and triggers another request. No cache, GraphQL client, or per-card request is used.
 
-## Creation, movement, and ordering
+Creation requires a nonblank title and an ID present in successful results. Both
+the disabled button and submit handler enforce this. Errors offer Try again;
+loading and empty results explain why creation is unavailable. Existing board
+items and movement remain usable without characters.
 
-Array position is the card order. Creation appends an item with a new
-stable ID to the To Do array. The pure `moveItem` helper finds the source by stable item ID, removes that
-exact item, and inserts it at a final destination index in one immutable update.
-It copies only affected arrays and the containing board, retaining the item
-object, ID, title, and character assignment. Array order is deterministic;
-unchanged positions and missing IDs return the original board.
+## Drag-and-drop architecture
 
-This representation avoids maintaining an item lookup and separate ID lists in
-sync. The tradeoff is that locating an item by ID requires searching the column
-arrays. That is a reasonable cost for a small interview board. Normalization can
-be considered if requirements later justify frequent global lookups or shared
-item references. `tests/kanban.test.ts` covers moves, boundaries, no-ops, immutability, and repeated
-transfers that preserve the complete set of original items.
+The integration uses `@dnd-kit/react` and `@dnd-kit/dom` 0.5.0.
+`DragDropProvider` supplies default pointer/keyboard sensors, feedback, and
+announcements. `useSortable` receives each card's stable ID, array index, column
+group, and card type. A dedicated labeled button is the handle; Space starts or
+drops, arrows change targets, and Escape cancels.
 
-## Character fetching and selection
+Only `SortableKeyboardPlugin` is enabled for sortables. The default optimistic
+sorting plugin reparents DOM nodes between lists, conflicting with React's own
+list reconciliation in this implementation. React therefore owns membership:
+board arrays and counts change on drop, with visual feedback during dragging.
 
-`src/api/characters.ts` fetches the first page of characters with native fetch.
-It defines the character and GraphQL response types and rejects HTTP and GraphQL
-errors, including partial responses containing errors.
+`handleDragEnd` ignores cancellation, absent targets, invalid groups, and invalid
+sources. A card target supplies its group/index. Whole-column targets have lower
+collision priority, cover empty lists and column space, and append on drop.
+`moveItem` receives a final index after source removal, including same-column
+reorders. A no-op leaves the board and celebration state unchanged.
 
-`App` calls `useCharacters` once and shares its result with the form and board.
-`useCharacters` owns loading, success, and error state, supports retries, and
-aborts requests on cleanup to prevent stale updates. `CreateItemForm` renders
-these states below the board and owns the selected character ID.
-`CharacterSelector` is a controlled, presentational component with a labeled
-native select with required-field support. The form keeps only the selected string
-ID; items continue to store only that reference, without duplicated character
-objects or per-card requests. Fetching failures disable creation
-and offer a retry while the existing board continues to render independently.
+The handler currently computes a next board from its render's board snapshot and
+passes that value to App's setter. Creation uses a functional updater. This is
+adequate for the current synchronous local interactions; asynchronous or
+collaborative mutations would warrant centralizing transitions against the latest
+state, for example in a reducer.
 
-## Drag-and-drop lifecycle
+## Completion effect
 
-The integration uses `@dnd-kit/react` 0.5.0 and `@dnd-kit/dom` 0.5.0, checked
-against the [official multiple-list guide](https://dndkit.com/react/guides/multiple-sortable-lists/)
-and installed package types. There was no legacy dnd-kit integration to migrate.
+`KanbanBoard` queues a celebration only when a card moves from To Do/Doing into
+Done. Reordering within Done does not trigger it; leaving Done clears its entry,
+and entering again can celebrate again.
 
-`DragDropProvider` supplies the default pointer and keyboard sensors, drag
-feedback, and accessibility announcements. Each card uses `useSortable` with
-its stable ID, array index, column group, and a labeled button handle. Space
-starts/drops a keyboard drag, arrows select targets, and Escape cancels.
+`KanbanCard` waits for `isDragSource` to become false before mounting an
+aria-hidden CSS rocket and glow, avoiding animation restart during drag feedback
+cleanup. The glow's own `animationend` clears the celebration; bubbled child
+animation events are ignored. Both effects run for 900ms. Reduced-motion CSS
+uses an invisible 1ms animation to preserve cleanup without a visible pulse.
+No animation dependency or timer is needed.
 
-Only `SortableKeyboardPlugin` is enabled for sortables. The default
-`OptimisticSortingPlugin` reparents DOM nodes across lists; browser verification
-found this conflicts with React removing the same nodes from their original
-column. Disabling it keeps DOM membership under React's control. During dragging,
-the library moves its visual feedback and CSS highlights the source and target;
-the arrays and counts remain unchanged until a successful drop.
+## Accessibility, layout, and dependencies
 
-`KanbanBoard.handleDragEnd` ignores canceled drags, missing targets, and invalid
-sources/destinations. A card target supplies its group and current array index.
-Dropping on a card moves the source to that index. Each whole column is also a
-lower-priority droppable target, so empty columns work without a card target;
-dropping in column space appends. Card targets take precedence over their
-containing column. Source and destination are captured before the functional
-state updater invokes `moveItem` against the latest board in `App`.
+Semantic main/section headings, lists, labeled native form controls, required
+inputs, loading status, error alerts, and avatar alternatives support basic
+accessibility. Handles have visible focus and share keyboard instructions.
+Library announcements currently expose item IDs; this remains an accessibility
+limitation. Focus restoration occurs after drag feedback cleanup, so transient
+focus observations during a drop do not establish a lasting focus failure.
 
-There is no hover-state copy or rollback snapshot: canceling or dropping without
-changing position leaves state unchanged. The helper removes and reinserts one
-existing object atomically, so a valid board stays unique and complete. Invalid
-destination indices are rejected or clamped to the available array boundaries.
+The CSS grid uses three columns above 48rem and stacks below that breakpoint.
+Columns and form fields allow shrinking; an explicit `minmax(0, 1fr)` form track
+prevents long character options from forcing horizontal overflow at 320px.
+There is no UI framework. Runtime dependencies are React/React DOM and the two
+used dnd-kit packages; tooling/test dependencies each have an active use.
+TypeScript enables strict and unused-code checks. No obvious dead code was found.
 
-Moving an incomplete card to Done queues its celebration. `KanbanCard` waits
-until `isDragSource` is false before mounting the rocket and glow, allowing
-dnd-kit's drop feedback to finish restoring the card first. Starting CSS
-animations during that cleanup caused both animations to restart. The glow's
-own animation-end event clears the celebration; child events are ignored.
-Browser event counts verified one start and end per animation per completion.
+## Verification and remaining gaps
 
-Build, typecheck, lint, and test are configured npm commands. Run the tests with
-`npm test` on Node 22.22.2+, 24.15.0+, or 26+, supporting TypeScript stripping
-and the jsdom dependency. Typecheck
-also checks the test files. Browser checks covered all requested column directions,
-reordering to the beginning/end, an empty destination, cancellation, and no-op
-drops with keyboard input, plus pointer movement into an empty column.
+Run `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build`.
+The 33 automated tests cover:
 
-`tests/character-display.test.ts` uses the existing Vite TSX transform and React
-server rendering to check names, avatar URLs, shared assignments, missing data,
-loading/error creation guards, and assignment rendering after moves and reorders.
-Browser verification covered creating Rick and Morty cards, repeated assignments,
-loaded avatar images, reordering, and a transfer to Done. A temporary local
-fixture with a failing image URL verified that the avatar fallback retains the
-character name. Server rendering does not dispatch image events.
+- All six column directions, empty destinations, ordering, bounds, no-ops,
+  immutability, item identity, and uniqueness across repeated transfers.
+- GraphQL request shape, null filtering, empty results, HTTP/GraphQL errors,
+  missing results, network failure, cancellation propagation, and invalid JSON.
+- Character names/avatars/fallback markup and assignments after moves/reorders.
+- Valid/invalid form submissions, loading/error/empty guards, reset, and App
+  creation with distinct IDs for repeated titles.
 
-`tests/create-item.test.ts` uses React Testing Library with jsdom and Vite's TSX
-transform to exercise valid submissions, required-field guards, form reset,
-and invalidation of a selected character after loading state or results change.
-An App integration test mocks fetch and UUID generation to verify repeated titles
-create separate cards in To Do with the selected assignments and updated counts.
-Movement tests exercise all six column directions, empty destinations, reordering,
-and identity/uniqueness invariants without simulating the drag library.
+Tests use Node's runner and native TypeScript stripping, Vite's TSX transform,
+React server rendering, and React Testing Library with jsdom. No live API is
+needed. They do not simulate drag sensors, collision selection, hook retry/abort
+races, image-error events, or completion animation timing.
 
-Automated coverage does not simulate pointer/keyboard drag sensors, cancellation,
-drop-target selection, image load failures, retry/abort races in the character
-hook, or completion animations. Those remain browser/integration testing gaps.
+Final review also exercised the live character API, assigned creation, keyboard
+reordering, cancellation, empty Done drops, pointer transfers, completion mounting
+and cleanup, and desktop/narrow layouts. At 320px, the fixed layout's document
+scroll width equals its 320px viewport width.
+This is a focused review, not a full screen-reader, browser, or touch-device audit.
 
-Pagination, editing, deletion, and persistence remain
-outside this change.
+## Design tradeoffs and reasonable improvements
+
+Local state, native fetch, plain CSS, and a small pure movement helper keep the
+exercise readable. A drag library supplies the complex sensor/feedback behavior;
+custom drag physics would add disproportionate complexity. Rejecting partial
+GraphQL data favors a clear failure over silently incomplete choices. Sample
+fallback cards keep the board demonstrable while the API is unavailable.
+
+Future work should follow concrete requirements: character search/pagination,
+editing/deletion, undo, or persistence. First expand browser coverage for drag
+and completion behavior, improve announcement labels, and verify touch and
+screen-reader interactions. Consider a reducer or normalized state only if new
+mutation patterns justify it. None of those features is implemented here.
