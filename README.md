@@ -1,8 +1,9 @@
 # react-healthie-kanban
 React Typescript Healthie Kanban App
 
-Minimal React + TypeScript foundation built with Vite and plain CSS for an
-interview exercise. The app currently renders a static placeholder.
+React + TypeScript Kanban board built with Vite and plain CSS for an interview
+exercise. The app displays local sample cards across To Do, Doing, and Done.
+Character references are temporary; editing interactions are not implemented.
 
 ## Local development
 
@@ -29,8 +30,11 @@ configured.
 
 - `index.html`: HTML entry point and root element.
 - `src/main.tsx`: mounts React with StrictMode and imports global CSS.
-- `src/App.tsx`: minimal app component.
+- `src/App.tsx`: page layout and authoritative local board state.
+- `src/components/`: presentational board, column, and card components.
+- `src/kanban.ts`: board types and initial sample data.
 - `src/index.css`: plain global styles.
+- `docs/ARCHITECTURE.md`: component responsibilities, state model, and data flow.
 - `vite.config.ts`: Vite configuration and React plugin.
 - `tsconfig*.json`: strict TypeScript settings for the app and Vite config.
 - `.oxlintrc.json`: lint configuration.

@@ -19,13 +19,130 @@ body {
 }
 
 main {
-  max-width: 64rem;
+  max-width: 76rem;
   margin: 0 auto;
   padding: 3rem 1.5rem;
 }
 
 h1 {
+  margin: 0;
   line-height: 1.2;
+}
+
+.app-header {
+  margin-bottom: 2rem;
+}
+
+.app-header p {
+  margin: 0.75rem 0 0;
+  color: #475569;
+}
+
+.app-header .sample-notice {
+  font-size: 0.875rem;
+}
+
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.kanban-column {
+  min-width: 0;
+  min-height: 22rem;
+  padding: 1rem;
+  border: 1px solid #cbd5e1;
+  border-top: 4px solid #64748b;
+  border-radius: 0.75rem;
+  background: #f1f5f9;
+}
+
+.kanban-column--doing {
+  border-top-color: #2563eb;
+  background: #eff6ff;
+}
+
+.kanban-column--done {
+  border-top-color: #15803d;
+  background: #f0fdf4;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.column-header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.column-count {
+  min-width: 1.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 1rem;
+  background: #fff;
+  color: #475569;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.card-list {
+  display: grid;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kanban-card {
+  padding: 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #fff;
+  overflow-wrap: anywhere;
+}
+
+.kanban-card h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.character-reference {
+  display: grid;
+  gap: 0.125rem;
+  margin: 0.75rem 0 0;
+  color: #475569;
+  font-size: 0.75rem;
+}
+
+.empty-column {
+  margin: 0;
+  padding: 1.5rem 1rem;
+  border: 1px dashed #94a3b8;
+  border-radius: 0.5rem;
+  color: #475569;
+  text-align: center;
+}
+
+@media (max-width: 48rem) {
+  main {
+    padding: 2rem 1rem;
+  }
+
+  .kanban-board {
+    grid-template-columns: 1fr;
+  }
+
+  .kanban-column {
+    min-height: 12rem;
+  }
 }
 
 .character-preview {
