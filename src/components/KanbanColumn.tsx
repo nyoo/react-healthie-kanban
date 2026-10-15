@@ -1,4 +1,5 @@
 import { useDroppable } from '@dnd-kit/react'
+import type { Character } from '../api/characters'
 import type { ColumnId, KanbanItem } from '../kanban'
 import KanbanCard from './KanbanCard'
 
@@ -6,11 +7,12 @@ type KanbanColumnProps = {
   id: ColumnId
   title: string
   items: KanbanItem[]
+  characters: Character[]
   celebratingItemIds: string[]
   onCelebrationEnd: (itemId: string) => void
 }
 
-function KanbanColumn({ id, title, items, celebratingItemIds, onCelebrationEnd }: KanbanColumnProps) {
+function KanbanColumn({ id, title, items, characters, celebratingItemIds, onCelebrationEnd }: KanbanColumnProps) {
   const headingId = `column-${id}-heading`
   const { ref, isDropTarget } = useDroppable({
     id,
@@ -41,6 +43,7 @@ function KanbanColumn({ id, title, items, celebratingItemIds, onCelebrationEnd }
             <KanbanCard
               key={item.id}
               item={item}
+              character={characters.find((character) => character.id === item.characterId)}
               columnId={id}
               index={index}
               isCelebrating={id === 'done' && celebratingItemIds.includes(item.id)}

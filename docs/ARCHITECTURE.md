@@ -2,14 +2,19 @@
 
 ## Component responsibilities
 
-- `App` owns the board state, generates item IDs, and appends created items to To Do.
-- `CreateItemForm` loads character choices and collects and validates controlled
+- `App` owns the board state and shared character request, generates item IDs, and
+  appends created items to To Do.
+- `CreateItemForm` receives character loading state and collects and validates controlled
   title and character inputs before calling `App` through `onCreate`.
 - `KanbanBoard` defines the column labels and display order: To Do, Doing, Done.
-  It passes each column its ID, title, and ordered items.
+  It passes each column its ID, title, ordered items, and shared characters.
 - `KanbanColumn` renders a heading, a count derived from its items, and either an
-  ordered display of cards or an empty placeholder.
-- `KanbanCard` displays an item's title and temporary character reference.
+  ordered display of cards or an empty placeholder. It resolves each item's string
+  `characterId` from the shared character collection and passes the matching
+  character to `KanbanCard`.
+- `KanbanCard` displays the item title, character name, and API avatar. Missing
+  characters show “Character unavailable”; missing or failed images show an
+  accessible avatar fallback while retaining any available character name.
 
 The board components receive data through props and do not maintain copies of
 the board state. `KanbanBoard` also owns the drag event handler; `KanbanColumn`
@@ -85,11 +90,14 @@ transfers that preserve the complete set of original items.
 It defines the character and GraphQL response types and rejects HTTP and GraphQL
 errors, including partial responses containing errors.
 
+`App` calls `useCharacters` once and shares its result with the form and board.
 `useCharacters` owns loading, success, and error state, supports retries, and
 aborts requests on cleanup to prevent stale updates. `CreateItemForm` renders
 these states below the board and owns the selected character ID.
 `CharacterSelector` is a controlled, presentational component with a labeled
-native select with required-field support. Fetching failures disable creation
+native select with required-field support. The form keeps only the selected string
+ID; items continue to store only that reference, without duplicated character
+objects or per-card requests. Fetching failures disable creation
 and offer a retry while the existing board continues to render independently.
 
 ## Drag-and-drop lifecycle
@@ -123,11 +131,26 @@ changing position leaves state unchanged. The helper removes and reinserts one
 existing object atomically, so a valid board stays unique and complete. Invalid
 destination indices are rejected or clamped to the available array boundaries.
 
+Moving an incomplete card to Done queues its celebration. `KanbanCard` waits
+until `isDragSource` is false before mounting the rocket and glow, allowing
+dnd-kit's drop feedback to finish restoring the card first. Starting CSS
+animations during that cleanup caused both animations to restart. The glow's
+own animation-end event clears the celebration; child events are ignored.
+Browser event counts verified one start and end per animation per completion.
+
 Build, typecheck, and lint are configured npm commands. Run the existing and
 movement tests with `node --test tests/*.test.ts` on a Node version supporting
 TypeScript stripping. Browser checks covered all requested column directions,
 reordering to the beginning/end, an empty destination, cancellation, and no-op
 drops with keyboard input, plus pointer movement into an empty column.
 
-Pagination, completion animations, editing, deletion, and persistence remain
+`tests/character-display.test.ts` uses the existing Vite TSX transform and React
+server rendering to check names, avatar URLs, shared assignments, missing data,
+loading/error creation guards, and assignment rendering after moves and reorders.
+Browser verification covered creating Rick and Morty cards, repeated assignments,
+loaded avatar images, reordering, and a transfer to Done. A temporary local
+fixture with a failing image URL verified that the avatar fallback retains the
+character name. Server rendering does not dispatch image events.
+
+Pagination, editing, deletion, and persistence remain
 outside this change.
