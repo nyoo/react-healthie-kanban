@@ -89,5 +89,6 @@ These are discussion proposals only. None is implemented in this review.
 
 Load characters, create a card with a required assignment, reorder it, move it
 into empty Done, and show the completion effect. Demonstrate keyboard Space,
-arrows, and Escape. Explain sample assignment fallbacks, show the test suite, and
-state the first-page-only and refresh-reset limitations before discussing extensions.
+arrows, and Escape. Explain character loading/error fallbacks, show the test
+suite, and state the first-page-only and refresh-reset limitations before
+discussing extensions.

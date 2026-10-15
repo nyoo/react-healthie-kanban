@@ -42,19 +42,19 @@ export const initialBoard: BoardState = {
     {
       id: 'sample-card-1',
       title: 'Plan a morning walk',
-      characterId: 'sample-character-1',
+      characterId: '1',
     },
     {
       id: 'sample-card-2',
       title: 'Prepare a weekly meal plan',
-      characterId: 'sample-character-2',
+      characterId: '2',
     },
   ],
   doing: [
     {
       id: 'sample-card-3',
       title: 'Build a daily stretching routine',
-      characterId: 'sample-character-3',
+      characterId: '3',
     },
   ],
   done: [],

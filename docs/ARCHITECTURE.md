@@ -31,9 +31,10 @@ type BoardState = Record<ColumnId, KanbanItem[]>
 Array membership represents column ownership and array position represents order.
 Each item has a unique, stable ID used for React keys and dragging. Counts are
 array lengths; no separate status, position, or count fields need synchronization.
-The initial fixture contains three sample items with deliberately unavailable
-character references. Newly created items use `crypto.randomUUID()` and a valid
-API character ID. Repeated titles and shared character assignments are allowed.
+The initial fixture contains three sample items referencing API character IDs
+1 (Rick Sanchez), 2 (Morty Smith), and 3 (Summer Smith). Newly created items use
+`crypto.randomUUID()` and a valid API character ID. Repeated titles and shared
+character assignments are allowed.
 
 `moveItem` is a pure immutable transition. It finds an item by ID, removes it,
 then inserts the same object at the final destination index. It copies affected
@@ -151,8 +152,8 @@ This is a focused review, not a full screen-reader, browser, or touch-device aud
 Local state, native fetch, plain CSS, and a small pure movement helper keep the
 exercise readable. A drag library supplies the complex sensor/feedback behavior;
 custom drag physics would add disproportionate complexity. Rejecting partial
-GraphQL data favors a clear failure over silently incomplete choices. Sample
-fallback cards keep the board demonstrable while the API is unavailable.
+GraphQL data favors a clear failure over silently incomplete choices. Seed
+cards use actual API character IDs and remain movable while the API is unavailable.
 
 Future work should follow concrete requirements: character search/pagination,
 editing/deletion, undo, or persistence. First expand browser coverage for drag
