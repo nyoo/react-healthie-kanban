@@ -6,9 +6,11 @@ type KanbanColumnProps = {
   id: ColumnId
   title: string
   items: KanbanItem[]
+  celebratingItemIds: string[]
+  onCelebrationEnd: (itemId: string) => void
 }
 
-function KanbanColumn({ id, title, items }: KanbanColumnProps) {
+function KanbanColumn({ id, title, items, celebratingItemIds, onCelebrationEnd }: KanbanColumnProps) {
   const headingId = `column-${id}-heading`
   const { ref, isDropTarget } = useDroppable({
     id,
@@ -36,7 +38,14 @@ function KanbanColumn({ id, title, items }: KanbanColumnProps) {
       {items.length > 0 ? (
         <ul className="card-list">
           {items.map((item, index) => (
-            <KanbanCard key={item.id} item={item} columnId={id} index={index} />
+            <KanbanCard
+              key={item.id}
+              item={item}
+              columnId={id}
+              index={index}
+              isCelebrating={id === 'done' && celebratingItemIds.includes(item.id)}
+              onCelebrationEnd={onCelebrationEnd}
+            />
           ))}
         </ul>
       ) : (

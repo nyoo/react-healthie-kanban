@@ -6,9 +6,11 @@ type KanbanCardProps = {
   item: KanbanItem
   columnId: ColumnId
   index: number
+  isCelebrating: boolean
+  onCelebrationEnd: (itemId: string) => void
 }
 
-function KanbanCard({ item, columnId, index }: KanbanCardProps) {
+function KanbanCard({ item, columnId, index, isCelebrating, onCelebrationEnd }: KanbanCardProps) {
   const { ref, handleRef, isDragSource, isDropTarget } = useSortable({
     id: item.id,
     index,
@@ -22,6 +24,17 @@ function KanbanCard({ item, columnId, index }: KanbanCardProps) {
   return (
     <li ref={ref} data-dragging={isDragSource} data-drop-target={isDropTarget}>
       <article className="kanban-card">
+        {isCelebrating && (
+          <span
+            className="completion-glow"
+            aria-hidden="true"
+            onAnimationEnd={(event) => {
+              if (event.target === event.currentTarget) onCelebrationEnd(item.id)
+            }}
+          >
+            <span className="completion-rocket">🚀</span>
+          </span>
+        )}
         <button
           ref={handleRef}
           type="button"
