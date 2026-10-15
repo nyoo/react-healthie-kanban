@@ -1,5 +1,7 @@
 # Healthie React Kanban
 
+![Kanban board with Rick Sanchez, Morty Smith, and Summer Smith assignments](docs/images/kanban-board.jpg)
+
 A React + TypeScript interview exercise built with Vite and plain CSS. Organize
 items across To Do, Doing, and Done, with a Rick and Morty character assigned to
 each newly created item. Board changes live only in the current browser session.
@@ -54,8 +56,9 @@ transform; they use mocked API responses and need no live service or browser.
 
 - Refreshing resets the board. There is no persistence, editing, deletion,
   authentication, backend, or multi-user synchronization.
-- The three initial sample cards deliberately reference unavailable characters;
-  their notice and fallback distinguish them from newly assigned cards.
+- The three seed cards reference Rick Sanchez, Morty Smith, and Summer Smith
+  from the API. Names and avatars show fallbacks until characters load or if
+  the request fails.
 - Only the API's first character page is available; no search or pagination.
   API/network failure prevents creation, but existing cards can still move.
 - GraphQL responses are typed, without comprehensive runtime schema validation.

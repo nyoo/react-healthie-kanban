@@ -24,7 +24,6 @@ function App() {
       <header className="app-header">
         <h1>Healthie Kanban</h1>
         <p>A place to see what’s next, in progress, and complete.</p>
-        <p className="sample-notice">Sample cards have unavailable character assignments.</p>
       </header>
       <KanbanBoard board={board} onBoardChange={setBoard} characters={characters} />
       <CreateItemForm onCreate={createItem} state={state} retry={retry} />

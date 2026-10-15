@@ -9,6 +9,7 @@ import type { CharactersState } from '../src/hooks/useCharacters.ts'
 const characters = [
   { id: '1', name: 'Rick Sanchez', image: 'https://example.com/rick.jpeg', species: 'Human' },
   { id: '2', name: 'Morty Smith', image: 'https://example.com/morty.jpeg', species: 'Human' },
+  { id: '3', name: 'Summer Smith', image: 'https://example.com/summer.jpeg', species: 'Human' },
 ]
 const loaded: CharactersState = { status: 'success', characters }
 let server: ViteDevServer
@@ -139,7 +140,7 @@ test('App appends repeated titles as distinct cards with their selected characte
   const view = rtl.render(createElement(App))
   await view.findByRole('option', { name: 'Rick Sanchez (Human)' })
 
-  for (const character of characters) {
+  for (const character of characters.slice(0, 2)) {
     rtl.fireEvent.change(view.getByRole('textbox', { name: 'Item title' }), { target: { value: 'New task' } })
     rtl.fireEvent.change(view.getByRole('combobox', { name: 'Character' }), { target: { value: character.id } })
     rtl.fireEvent.click(view.getByRole('button', { name: 'Create' }))
@@ -150,6 +151,10 @@ test('App appends repeated titles as distinct cards with their selected characte
   assert.deepEqual(cards.map((card) => rtl.within(card).getByRole('heading').textContent), [
     'Plan a morning walk', 'Prepare a weekly meal plan', 'New task', 'New task',
   ])
+  assert.ok(rtl.within(cards[0]).getByText('Rick Sanchez'))
+  assert.ok(rtl.within(cards[1]).getByText('Morty Smith'))
+  assert.ok(rtl.within(view.getByRole('region', { name: 'Doing' })).getByText('Summer Smith'))
+  assert.equal(view.queryByText('Character unavailable'), null)
   assert.ok(rtl.within(cards[2]).getByText('Rick Sanchez'))
   assert.ok(rtl.within(cards[3]).getByText('Morty Smith'))
   assert.ok(todo.getByLabelText('4 cards'))
