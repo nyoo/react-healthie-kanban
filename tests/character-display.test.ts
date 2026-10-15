@@ -33,8 +33,8 @@ const board: BoardState = {
 }
 
 async function renderBoard(value: BoardState, choices = characters) {
-  const { default: KanbanBoard }: typeof import('../src/components/KanbanBoard.tsx') =
-    await server.ssrLoadModule('/src/components/KanbanBoard.tsx')
+  const boardModule = await server.ssrLoadModule('/src/components/KanbanBoard.tsx')
+  const KanbanBoard: typeof import('../src/components/KanbanBoard.tsx').default = boardModule.default
   return renderToStaticMarkup(createElement(KanbanBoard, {
     board: value,
     characters: choices,
@@ -80,8 +80,8 @@ test('missing characters and empty image URLs render explicit fallbacks', async 
 })
 
 test('loading and errors disable creation without displaying placeholder identities', async () => {
-  const { CreateItemForm }: typeof import('../src/components/CreateItemForm.tsx') =
-    await server.ssrLoadModule('/src/components/CreateItemForm.tsx')
+  const formModule = await server.ssrLoadModule('/src/components/CreateItemForm.tsx')
+  const CreateItemForm: typeof import('../src/components/CreateItemForm.tsx').CreateItemForm = formModule.CreateItemForm
   for (const state of [{ status: 'loading' }, { status: 'error', message: 'Offline' }] as const) {
     const html = renderToStaticMarkup(createElement(CreateItemForm, {
       state, retry: () => {}, onCreate: () => {},

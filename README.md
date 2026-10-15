@@ -7,7 +7,7 @@ Character references are temporary; editing interactions are not implemented.
 
 ## Local development
 
-Use Node.js 22.12+ (Node 24 LTS recommended) and npm.
+Use Node.js 24 LTS (24.15.0+) and npm.
 
 ```sh
 npm ci
@@ -18,13 +18,20 @@ Open the local URL printed by Vite (normally http://localhost:5173).
 
 ```sh
 npm run typecheck
+npm test
 npm run lint
 npm run build
 npm run preview
 ```
 
-`preview` serves the production build locally after `build`. No test runner is
-configured.
+`preview` serves the production build locally after `build`.
+
+`npm test` uses Node's built-in test runner and TypeScript stripping. The jsdom
+dependency requires Node 22.22.2+, 24.15.0+, or 26+. Tests cover pure board
+transitions, mocked character API responses,
+character rendering, and form submission with React Testing Library and jsdom.
+Vite supplies the existing TSX transform. No live API or browser is required.
+`typecheck` includes test files as well as the app and Vite configuration.
 
 ## Structure
 
