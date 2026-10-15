@@ -2,7 +2,9 @@
 
 ## Component responsibilities
 
-- `App` owns the board state and renders the page header and board.
+- `App` owns the board state, generates item IDs, and appends created items to To Do.
+- `CreateItemForm` loads character choices and collects and validates controlled
+  title and character inputs before calling `App` through `onCreate`.
 - `KanbanBoard` defines the column labels and display order: To Do, Doing, Done.
   It passes each column its ID, title, and ordered items.
 - `KanbanColumn` renders a heading, a count derived from its items, and either an
@@ -44,16 +46,26 @@ dependency on a character API.
 flows downward: `App` → `KanbanBoard` → `KanbanColumn` → `KanbanCard`.
 The sample fixture is initialization data, not another synchronized state store.
 
-This scope has no editing controls, so the state setter is intentionally unused.
-Future interactions can call callbacks supplied by `App` and update that same
-state with functional updates. Components must treat props and the initial
-fixture as immutable. No context, external store, effects, or state transformation
-helpers are needed for the current read-only UI.
+`CreateItemForm` trims the title and checks that the selected character ID is
+present in the successfully loaded character list. Empty or whitespace-only
+titles, missing selections, loading, empty results, and API failures disable
+creation. The submit handler also guards against invalid input.
+
+On valid submission, the form calls `App` with only the title and character ID.
+`App` generates a `crypto.randomUUID()` once per item, outside the state updater,
+and uses a functional update to append the item to a copied To Do array. Other
+columns retain their existing arrays. React immediately renders the new card
+and derived count, and the form clears both inputs after the callback returns.
+Repeated titles are allowed; IDs are independent of titles and stay stable
+across renders. Character objects are not duplicated in board state.
+
+Components treat props and the initial fixture as immutable. No context or
+external store is needed.
 
 ## Future creation, movement, and ordering
 
-Array position is the card order. Future creation can insert an item with a new
-stable ID into a column's array. Reordering can replace that array with a reordered
+Array position is the card order. Creation appends an item with a new
+stable ID to the To Do array. Reordering can replace that array with a reordered
 copy. Moving between columns can remove the item from the source array and
 insert it at a chosen destination index in one state update, retaining its ID.
 These operations should copy the affected arrays and the containing board.
@@ -72,11 +84,11 @@ It defines the character and GraphQL response types and rejects HTTP and GraphQL
 errors, including partial responses containing errors.
 
 `useCharacters` owns loading, success, and error state, supports retries, and
-aborts requests on cleanup to prevent stale updates. `CharacterPreview` renders
+aborts requests on cleanup to prevent stale updates. `CreateItemForm` renders
 these states below the board and owns the selected character ID.
 `CharacterSelector` is a controlled, presentational component with a labeled
-native select. Fetching failures remain local to the preview; the sample board
-continues to render independently.
+native select with required-field support. Fetching failures disable creation
+and offer a retry while the existing board continues to render independently.
 
-The selector is a preview for a future creation form. Pagination, creation
-controls, drag-and-drop, animations, and persistence remain outside this change.
+Pagination, drag-and-drop, animations, editing, deletion, and persistence remain
+outside this change.
