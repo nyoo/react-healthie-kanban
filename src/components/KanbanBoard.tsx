@@ -3,6 +3,7 @@ import type { DragEndEvent } from '@dnd-kit/react'
 import { isSortable } from '@dnd-kit/react/sortable'
 import { useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
+import type { Character } from '../api/characters'
 import { isColumnId, moveItem } from '../kanban'
 import type { BoardState, ColumnId } from '../kanban'
 import KanbanColumn from './KanbanColumn'
@@ -10,6 +11,7 @@ import KanbanColumn from './KanbanColumn'
 type KanbanBoardProps = {
   board: BoardState
   onBoardChange: Dispatch<SetStateAction<BoardState>>
+  characters: Character[]
 }
 
 const columns: { id: ColumnId; title: string }[] = [
@@ -18,7 +20,7 @@ const columns: { id: ColumnId; title: string }[] = [
   { id: 'done', title: 'Done' },
 ]
 
-function KanbanBoard({ board, onBoardChange }: KanbanBoardProps) {
+function KanbanBoard({ board, onBoardChange, characters }: KanbanBoardProps) {
   const [celebratingItemIds, setCelebratingItemIds] = useState<string[]>([])
 
   function finishCelebration(itemId: string) {
@@ -69,6 +71,7 @@ function KanbanBoard({ board, onBoardChange }: KanbanBoardProps) {
             id={id}
             title={title}
             items={board[id]}
+            characters={characters}
             celebratingItemIds={celebratingItemIds}
             onCelebrationEnd={finishCelebration}
           />

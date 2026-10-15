@@ -1,16 +1,17 @@
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useCharacters } from '../hooks/useCharacters'
+import type { CharactersState } from '../hooks/useCharacters'
 import type { KanbanItem } from '../kanban'
 import { CharacterSelector } from './CharacterSelector'
 
 interface CreateItemFormProps {
   onCreate: (input: Pick<KanbanItem, 'title' | 'characterId'>) => void
+  state: CharactersState
+  retry: () => void
 }
 
-export function CreateItemForm({ onCreate }: CreateItemFormProps) {
+export function CreateItemForm({ onCreate, state, retry }: CreateItemFormProps) {
   const titleId = useId()
-  const { state, retry } = useCharacters()
   const [title, setTitle] = useState('')
   const [characterId, setCharacterId] = useState('')
   const characters = state.status === 'success' ? state.characters : []

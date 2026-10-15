@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { fetchCharacters } from '../api/characters'
 import type { Character } from '../api/characters'
 
-type CharactersState =
+export type CharactersState =
   | { status: 'loading' }
   | { status: 'success'; characters: Character[] }
   | { status: 'error'; message: string }
