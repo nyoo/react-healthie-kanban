@@ -65,5 +65,18 @@ be considered if requirements later justify frequent global lookups or shared
 item references. Transformation helpers can be extracted when those operations
 are implemented and have concrete behavior to test.
 
-Fetching, character selection, creation controls, drag-and-drop, animations,
-and persistence are outside this change.
+## Character fetching and selection
+
+`src/api/characters.ts` fetches the first page of characters with native fetch.
+It defines the character and GraphQL response types and rejects HTTP and GraphQL
+errors, including partial responses containing errors.
+
+`useCharacters` owns loading, success, and error state, supports retries, and
+aborts requests on cleanup to prevent stale updates. `CharacterPreview` renders
+these states below the board and owns the selected character ID.
+`CharacterSelector` is a controlled, presentational component with a labeled
+native select. Fetching failures remain local to the preview; the sample board
+continues to render independently.
+
+The selector is a preview for a future creation form. Pagination, creation
+controls, drag-and-drop, animations, and persistence remain outside this change.

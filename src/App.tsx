@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CharacterPreview } from './components/CharacterPreview'
 import KanbanBoard from './components/KanbanBoard'
 import { initialBoard } from './kanban'
 import type { BoardState } from './kanban'
@@ -14,6 +15,7 @@ function App() {
         <p className="sample-notice">Sample board · Temporary character references</p>
       </header>
       <KanbanBoard board={board} />
+      <CharacterPreview />
     </main>
   )
 }

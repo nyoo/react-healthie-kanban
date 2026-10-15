@@ -144,3 +144,38 @@ h1 {
     min-height: 12rem;
   }
 }
+
+.character-preview {
+  max-width: 32rem;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background-color: #fff;
+}
+
+.character-preview h2 {
+  margin-top: 0;
+}
+
+.character-selector {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+select,
+button {
+  max-width: 100%;
+  padding: 0.5rem;
+  font: inherit;
+}
+
+.character-preview figure {
+  margin: 1.5rem 0 0;
+}
+
+.character-preview img {
+  display: block;
+  border-radius: 0.5rem;
+}
